@@ -37,8 +37,16 @@ def button_handling(update: Update, context: CallbackContext):
     elif query.data == "tomorrow":
         context.user_data["plan_date"] = today + datetime.timedelta(days=1)
         return show_daily_plan(update, context)
+    elif query.data == "back":
+        print("You pressed 'back' but it's not implemented yet")
 
 
 def show_daily_plan(update: Update, context: CallbackContext):
-    pass
-
+    query = update.callback_query
+    query.answer()
+    date = context.user_data.get("plan_date")
+    keyboard = [
+        [InlineKeyboardButton("Назад", callback_data="back")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query.message.reply_text(text=f"Вот ваш план на {date}", reply_markup=reply_markup)
