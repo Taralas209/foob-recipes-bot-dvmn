@@ -48,6 +48,12 @@ def start(update: Update, _):
         reply_markup=SUBSCRIPTION)
 
 
+def restart(update, context):
+    update.message.reply_text("Бот перезапущен!")
+    context.user_data.clear()
+    return start(update, context)
+
+
 def get_another_dish(update: Update, context: CallbackContext):
     """Выбрать другой рецепт."""
     query = update.callback_query
@@ -105,6 +111,7 @@ def main():
     dp.add_handler(CallbackQueryHandler(get_another_dish, pattern='another_dish'))
     dp.add_handler(CallbackQueryHandler(get_dish_ingredients, pattern='dish_ingredients'))
     #dp.add_handler(CallbackQueryHandler(get_subscribe, pattern='subscribe'))
+    dp.add_handler(CommandHandler('restart', restart))
 
     updater.start_polling()
     updater.idle()
