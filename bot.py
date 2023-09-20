@@ -6,11 +6,12 @@ import django
 django.setup()
 
 from telegram import Update, ParseMode
-from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler
 from recipes.models import Recipes, Category, Ingredients
-from keyboard import START_KEYBOARD, SUBSCRIPTION
+from recipes.keyboard import START_KEYBOARD, SUBSCRIPTION
 from environs import Env
 from config.settings import BOT_TOKEN
+from recipes import handlers
 
 
 def get_random_recipe():
@@ -105,12 +106,21 @@ def main():
 
     updater = Updater(token=BOT_TOKEN)
 
+    conversation_handler = ConversationHandler(
+        entry_points=[CommandHandler('menu', handlers.show_user_menu)],
+        states={
+            handlers.BUTTON_HANDLING:[CallbackQueryHandler(handlers.button_handling)],
+        },
+        fallbacks=[CommandHandler('restart', restart)]
+    )
+
     dp = updater.dispatcher
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CallbackQueryHandler(get_another_dish, pattern='another_dish'))
     dp.add_handler(CallbackQueryHandler(get_dish_ingredients, pattern='dish_ingredients'))
     #dp.add_handler(CallbackQueryHandler(get_subscribe, pattern='subscribe'))
     dp.add_handler(CommandHandler('restart', restart))
+    dp.add_handler(conversation_handler)
 
     updater.start_polling()
     updater.idle()
