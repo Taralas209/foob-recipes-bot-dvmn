@@ -28,6 +28,7 @@ def get_random_recipe():
     # }
     return recipe
 
+
 def start(update: Update, _):
     recipe = get_random_recipe()
     title = recipe.title
@@ -78,13 +79,13 @@ def get_another_dish(update: Update, context: CallbackContext):
         'Оформите нашу подписку, и мы побеспокоимся за вас ⬇️',
         reply_markup=SUBSCRIPTION)
 
+
 def get_dish_ingredients(update: Update, _):
     """Показать Ингредиенты блюда."""
     recipe = get_random_recipe()
     query = update.callback_query
     query.answer()
     query.edit_message_text(f'{recipe.ingredients.all()}',reply_markup=START_KEYBOARD)
-
 
 
 def get_subscribe(update: Update, _):
@@ -96,8 +97,6 @@ def get_subscribe(update: Update, _):
         'Спасибо, за подписку на наш сервис ❤️\n\n'
         'Выше мы оставили для Вас меню на сегодня ⬆️')
     query.message.reply_text(f'{query.data}')
-
-
 
 
 def main():
