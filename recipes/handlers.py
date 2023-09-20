@@ -1,5 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
+import datetime
 
 
 BUTTON_HANDLING = range(1)
@@ -21,4 +22,23 @@ def show_user_menu(update: Update, context: CallbackContext):
     update.message.reply_text(text, reply_markup=reply_markup)
 
     return BUTTON_HANDLING
+
+
+def button_handling(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    today = datetime.date.today()
+    if query.data == "tomorrow":
+        context.user_data["plan_date"] = today - datetime.timedelta(days=1)
+        return show_daily_plan(update, context)
+    elif query.data == "today":
+        context.user_data["plan_date"] = today
+        return show_daily_plan(update, context)
+    elif query.data == "tomorrow":
+        context.user_data["plan_date"] = today + datetime.timedelta(days=1)
+        return show_daily_plan(update, context)
+
+
+def show_daily_plan(update: Update, context: CallbackContext):
+    pass
 
