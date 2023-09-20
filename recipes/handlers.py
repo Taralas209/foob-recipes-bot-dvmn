@@ -28,7 +28,7 @@ def button_handling(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
     today = datetime.date.today()
-    if query.data == "tomorrow":
+    if query.data == "yesterday":
         context.user_data["plan_date"] = today - datetime.timedelta(days=1)
         return show_daily_plan(update, context)
     elif query.data == "today":
