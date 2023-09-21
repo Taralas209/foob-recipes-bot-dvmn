@@ -19,7 +19,12 @@ def show_user_menu(update: Update, context: CallbackContext):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(text, reply_markup=reply_markup)
+    if update.message:
+        menu_message = update.message.reply_text(text, reply_markup=reply_markup)
+    else:
+        menu_message = update.callback_query.message.reply_text(text, reply_markup=reply_markup)
+
+    context.user_data["menu_message_id"] = menu_message.message_id
 
     return BUTTON_HANDLING
 
@@ -38,12 +43,13 @@ def button_handling(update: Update, context: CallbackContext):
         context.user_data["plan_date"] = today + datetime.timedelta(days=1)
         return show_daily_plan(update, context)
     elif query.data == "back":
-        print("You pressed 'back' but it's not implemented yet")
+        return show_user_menu(update, context)
 
 
 def show_daily_plan(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
+    # menu_message_id = context.user_data.get("menu_message_id")
     date = context.user_data.get("plan_date")
     keyboard = [
         [InlineKeyboardButton("Назад", callback_data="back")]
