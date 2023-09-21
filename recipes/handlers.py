@@ -49,10 +49,16 @@ def button_handling(update: Update, context: CallbackContext):
 def show_daily_plan(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
-    # menu_message_id = context.user_data.get("menu_message_id")
+    menu_message_id = context.user_data.get("menu_message_id")
     date = context.user_data.get("plan_date")
     keyboard = [
         [InlineKeyboardButton("Назад", callback_data="back")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.message.reply_text(text=f"Вот ваш план на {date}", reply_markup=reply_markup)
+    context.bot.edit_message_text(
+        text=f"Вот ваш план на {date}\n\n- Рецепт 1\n- Рецепт 2\n...",
+        reply_markup=reply_markup,
+        message_id=menu_message_id,
+        chat_id=query.message.chat_id,
+    )
+    # query.message.reply_text(text=f"Вот ваш план на {date}\n\n- Рецепт 1\n- Рецепт 2\n...", reply_markup=reply_markup)
