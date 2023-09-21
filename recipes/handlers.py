@@ -61,4 +61,3 @@ def show_daily_plan(update: Update, context: CallbackContext):
         message_id=menu_message_id,
         chat_id=query.message.chat_id,
     )
-    # query.message.reply_text(text=f"Вот ваш план на {date}\n\n- Рецепт 1\n- Рецепт 2\n...", reply_markup=reply_markup)
