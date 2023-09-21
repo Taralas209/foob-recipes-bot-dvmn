@@ -3,7 +3,7 @@ from telegram.ext import CallbackContext
 import datetime
 
 
-BUTTON_HANDLING, EXCLUDE_INGREDIENTS = range(2)
+BUTTON_HANDLING, EXCLUDE_INGREDIENTS, EXCLUDE_INGREDIENTS_HANDLING, CHOOSE_SUB_LENGTH = range(4)
 
 # Subscribed user's menu
 
@@ -84,4 +84,25 @@ def start_subscription(update: Update, context: CallbackContext):
     query.message.reply_text(text, reply_markup=reply_markup)
 
     return EXCLUDE_INGREDIENTS
+
+
+def exclude_ingredients(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    context.user_data["plan_choice"] = query.data
+
+    keyboard = [
+        [InlineKeyboardButton("Грибы", callback_data="exclude_mushrooms")],
+        [InlineKeyboardButton("Глютен", callback_data="exclude_gluten")],
+        [InlineKeyboardButton("Молочная продукция", callback_data="exclude_dairy")],
+        [InlineKeyboardButton("Я ем всё", callback_data="exclude_nothing")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    text = f"Отметьте, есть ли у вас непереносимость чего-то из списка:\n"
+
+    ingredients_message = query.message.reply_text(text, reply_markup=reply_markup)
+    context.user_data["ingredients_message_id"] = ingredients_message.message_id
+
+    return EXCLUDE_INGREDIENTS_HANDLING
+
 
