@@ -3,7 +3,9 @@ from telegram.ext import CallbackContext
 import datetime
 
 
-BUTTON_HANDLING = range(1)
+BUTTON_HANDLING, EXCLUDE_INGREDIENTS = range(2)
+
+# Subscribed user's menu
 
 
 def show_user_menu(update: Update, context: CallbackContext):
@@ -61,3 +63,25 @@ def show_daily_plan(update: Update, context: CallbackContext):
         message_id=menu_message_id,
         chat_id=query.message.chat_id,
     )
+
+# Process of subscription
+
+
+def start_subscription(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    keyboard = [
+        [InlineKeyboardButton("Классический", callback_data="classic_plan")],
+        [InlineKeyboardButton("Вегетарианский", callback_data="vegetarian_plan")],
+        [InlineKeyboardButton("Низкоуглеводный", callback_data="low_carb_plan")],
+        [InlineKeyboardButton("Спортивный", callback_data="sport_plan")],
+        [InlineKeyboardButton("Кето", callback_data="keto_plan")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    text = f"Отлично! Для начала выберите на какой план вы хотите подписаться:"
+
+    query.message.reply_text(text, reply_markup=reply_markup)
+
+    return EXCLUDE_INGREDIENTS
+
