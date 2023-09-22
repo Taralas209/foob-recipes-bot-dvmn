@@ -13,22 +13,6 @@ NUMBER_RECIPE_CHANGES = 2
 TODAY = {}
 
 
-def get_random_recipe():
-    """Случайный рецепт."""
-    recipe = Recipes.objects.order_by('?').first()
-    # title = recipe.title
-    # image = recipe.image
-    # description = recipe.description
-    # category = recipe.category
-    # return {
-    #     'title':title,
-    #    'image': image,
-    #     'description':description,
-    #     'category':category
-    # }
-    return recipe
-
-
 def start(update: Update, _):
     global INGREDIENTS
     global NUMBER_RECIPE_CHANGES
@@ -74,7 +58,7 @@ def get_another_dish(update: Update, _):
 
     if NUMBER_RECIPE_CHANGES > 0:
         TODAY['today'] = datetime.datetime.now().date()
-        recipe = get_random_recipe()
+        recipe = Recipes.objects.order_by('?').first()
         title = recipe.title
         image = recipe.image
         description = recipe.description
