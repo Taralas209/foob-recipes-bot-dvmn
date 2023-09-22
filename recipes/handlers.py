@@ -194,5 +194,12 @@ def finish_subscribing(update: Update, context: CallbackContext):
 
     query.message.reply_text(text=text)
 
+    new_plan = {
+        "user_id": query.from_user.id,
+        "plan": plan_choice,
+        "sub_start_date": today,
+        "sub_end_date": end_date
+    }
+
     return ConversationHandler.END
 
