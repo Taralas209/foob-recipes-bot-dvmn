@@ -163,12 +163,12 @@ def finish_subscribing(update: Update, context: CallbackContext):
     query.answer()
 
     today = datetime.date.today()
-    if query.data == "week_subscription":
-        end_date = today + datetime.timedelta(weeks=1)
-    elif query.data == "month_subscription":
-        end_date = today + datetime.timedelta(days=30)
-    elif query.data == "3_months_subscription":
-        end_date = today + datetime.timedelta(days=90)
+    if query.data == "3_day_subscription":
+        end_date = today + datetime.timedelta(days=3)
+    elif query.data == "5_day_subscription":
+        end_date = today + datetime.timedelta(days=5)
+    elif query.data == "7_day_subscription":
+        end_date = today + datetime.timedelta(days=7)
 
     context.user_data["sub_end_date"] = end_date
 
