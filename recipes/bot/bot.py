@@ -1,9 +1,10 @@
 from telegram import Update, ParseMode
-from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler
 from recipes.models import Recipes, Category, Ingredients
 from recipes.bot.keyboard import START_KEYBOARD, SUBSCRIPTION
 from environs import Env
 from config.settings import BOT_TOKEN
+from recipes import handlers
 from django.utils import timezone
 import datetime
 import logging
@@ -43,8 +44,13 @@ def start(update: Update, _):
                                   reply_markup=SUBSCRIPTION,
                                   parse_mode='HTML')
 
+def restart(update, context):
+    update.message.reply_text("Бот перезапущен!")
+    context.user_data.clear()
+    return start(update, context)
 
-def get_another_dish(update: Update, _):
+
+def get_another_dish(update: Update, context: CallbackContext):
     """Выбрать другой рецепт."""
     global INGREDIENTS
     global NUMBER_RECIPE_CHANGES
@@ -120,11 +126,32 @@ def main():
 
     updater = Updater(token=BOT_TOKEN)
 
+    conversation_handler = ConversationHandler(
+        entry_points=[CommandHandler('menu', handlers.show_user_menu)],
+        states={
+            handlers.BUTTON_HANDLING: [CallbackQueryHandler(handlers.button_handling)],
+        },
+        fallbacks=[CommandHandler('restart', restart)]
+    )
+
+    subscription_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(handlers.start_subscription, pattern='subscribe')],
+        states={
+            handlers.EXCLUDE_INGREDIENTS: [CallbackQueryHandler(handlers.exclude_ingredients)],
+            handlers.EXCLUDE_INGREDIENTS_HANDLING: [CallbackQueryHandler(handlers.exclude_ingredients_handling)],
+            handlers.CHOOSE_SUB_LENGTH: [CallbackQueryHandler(handlers.choose_sub_length)],
+            handlers.FINISH_SUBSCRIBING: [CallbackQueryHandler(handlers.finish_subscribing)],
+        },
+        fallbacks=[CommandHandler('restart', restart)]
+    )
+
     dp = updater.dispatcher
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CallbackQueryHandler(get_another_dish, pattern='another_dish'))
     dp.add_handler(CallbackQueryHandler(get_dish_ingredients, pattern='dish_ingredients'))
-    # dp.add_handler(CallbackQueryHandler(get_subscribe, pattern='subscribe'))
+    dp.add_handler(CommandHandler('restart', restart))
+    dp.add_handler(conversation_handler)
+    dp.add_handler(subscription_handler)
 
     updater.start_polling()
     updater.idle()
