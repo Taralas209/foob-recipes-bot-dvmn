@@ -3,7 +3,7 @@ from telegram.ext import CallbackContext
 import datetime
 
 
-BUTTON_HANDLING, EXCLUDE_INGREDIENTS, EXCLUDE_INGREDIENTS_HANDLING, CHOOSE_SUB_LENGTH = range(4)
+BUTTON_HANDLING, EXCLUDE_INGREDIENTS, EXCLUDE_INGREDIENTS_HANDLING, CHOOSE_SUB_LENGTH, FINISH_SUBSCRIBING = range(5)
 
 # Subscribed user's menu
 
@@ -143,4 +143,20 @@ def choose_sub_length(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
 
-    print("Choosing sub length")
+    print(f"Excluded choices: {context.user_data.get('excluded_choices')}")
+
+    keyboard = [
+        [InlineKeyboardButton("Неделя", callback_data="week_subscription")],
+        [InlineKeyboardButton("Месяц", callback_data="month_subscription")],
+        [InlineKeyboardButton("3 месяца", callback_data="3_months_subscription")]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    query.message.reply_text("Выберите срок подписки:", reply_markup=reply_markup)
+
+    return FINISH_SUBSCRIBING
+
+
+def finish_subscribing(update: Update, context: CallbackContext):
+    pass
