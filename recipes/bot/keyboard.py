@@ -16,3 +16,4 @@ SUBSCRIPTION = InlineKeyboardMarkup(
         ]
     ]
 )
+print(START_KEYBOARD)
