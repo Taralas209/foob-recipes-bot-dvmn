@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from bot import main
+from recipes.bot.bot import main
 
 
 class Command(BaseCommand):
