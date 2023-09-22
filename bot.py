@@ -109,7 +109,17 @@ def main():
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('menu', handlers.show_user_menu)],
         states={
-            handlers.BUTTON_HANDLING:[CallbackQueryHandler(handlers.button_handling)],
+            handlers.BUTTON_HANDLING: [CallbackQueryHandler(handlers.button_handling)],
+        },
+        fallbacks=[CommandHandler('restart', restart)]
+    )
+
+    subscription_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(handlers.start_subscription, pattern='subscribe')],
+        states={
+            handlers.EXCLUDE_INGREDIENTS: [CallbackQueryHandler(handlers.exclude_ingredients)],
+            handlers.EXCLUDE_INGREDIENTS_HANDLING: [CallbackQueryHandler(handlers.exclude_ingredients_handling)],
+            handlers.CHOOSE_SUB_LENGTH: [CallbackQueryHandler(handlers.choose_sub_length)],
         },
         fallbacks=[CommandHandler('restart', restart)]
     )
@@ -118,9 +128,9 @@ def main():
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CallbackQueryHandler(get_another_dish, pattern='another_dish'))
     dp.add_handler(CallbackQueryHandler(get_dish_ingredients, pattern='dish_ingredients'))
-    #dp.add_handler(CallbackQueryHandler(get_subscribe, pattern='subscribe'))
     dp.add_handler(CommandHandler('restart', restart))
     dp.add_handler(conversation_handler)
+    dp.add_handler(subscription_handler)
 
     updater.start_polling()
     updater.idle()

@@ -98,11 +98,49 @@ def exclude_ingredients(update: Update, context: CallbackContext):
         [InlineKeyboardButton("Я ем всё", callback_data="exclude_nothing")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    text = f"Отметьте, есть ли у вас непереносимость чего-то из списка:\n"
+    text = "Отметьте, есть ли у вас непереносимость чего-то из списка:\n"
 
     ingredients_message = query.message.reply_text(text, reply_markup=reply_markup)
     context.user_data["ingredients_message_id"] = ingredients_message.message_id
 
+    context.user_data["exclude_options"] = {
+        "exclude_mushrooms": "Грибы",
+        "exclude_gluten": "Глютен",
+        "exclude_dairy": "Молочная продукция",
+        "exclude_nothing": "Больше ничего",
+    }
+    context.user_data["exclusion_text"] = f"Вы отметили:\n"
+    context.user_data["excluded_choices"] = []
+
     return EXCLUDE_INGREDIENTS_HANDLING
 
 
+def exclude_ingredients_handling(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    if query.data == "exclude_nothing":
+        return CHOOSE_SUB_LENGTH
+    else:
+        # TODO: actually write down user's choice to work with later
+        context.user_data["excluded_choices"].append(query.data)
+        user_choice = context.user_data.get("exclude_options").pop(query.data)
+        keyboard = []
+        for option in context.user_data.get("exclude_options"):
+            button = [InlineKeyboardButton(text=context.user_data.get("exclude_options")[option], callback_data=option)]
+            keyboard.append(button)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        context.user_data["exclusion_text"] += f"\n- {user_choice}"
+        context.bot.edit_message_text(
+            text=f"{context.user_data.get('exclusion_text')}\n\nЧто-то ещё?",
+            reply_markup=reply_markup,
+            message_id=context.user_data.get("ingredients_message_id"),
+            chat_id=query.message.chat_id
+        )
+
+
+def choose_sub_length(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    print("Choosing sub length")
