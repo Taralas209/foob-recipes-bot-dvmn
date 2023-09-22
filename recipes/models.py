@@ -1,12 +1,28 @@
 from django.db import models
 
 
+class User(models.Model):
+    telegram_id = models.PositiveIntegerField(verbose_name='Телеграм ID')
+    start_subscription = models.DateField(verbose_name='Дата начала подписки')
+    end_subscription = models.DateField(verbose_name='Дата окончания подписки')
+    is_subscription = models.BooleanField(verbose_name='Активна ли подписка')
+    category = models.ForeignKey('Category', related_name='users', verbose_name='Категория', on_delete=models.SET_NULL,
+                                 null=True)
+
+    def __str__(self):
+        return self.telegram_id
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+
 class Recipes(models.Model):
     title = models.TextField(verbose_name='Название блюда')
     image = models.ImageField(verbose_name='Изображение блюда', upload_to='recipes')
     description = models.TextField(blank=True, null=True, verbose_name='Описание')
     ingredients = models.ManyToManyField('Ingredients', verbose_name='Ингредиенты', related_name='Рецепты')
-    category = models.ManyToManyField('Category', related_name='recipes', verbose_name='Категория', null=True)
+    category = models.ManyToManyField('Category', related_name='recipes', verbose_name='Категория')
 
     def __str__(self):
         return self.title
