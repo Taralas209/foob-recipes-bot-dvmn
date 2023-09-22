@@ -44,6 +44,7 @@ def start(update: Update, _):
                                   reply_markup=SUBSCRIPTION,
                                   parse_mode='HTML')
 
+
 def restart(update, context):
     update.message.reply_text("Бот перезапущен!")
     context.user_data.clear()
@@ -126,7 +127,7 @@ def main():
 
     updater = Updater(token=BOT_TOKEN)
 
-    conversation_handler = ConversationHandler(
+    subscribers_menu_handler = ConversationHandler(
         entry_points=[CommandHandler('menu', handlers.show_user_menu)],
         states={
             handlers.BUTTON_HANDLING: [CallbackQueryHandler(handlers.button_handling)],
@@ -137,8 +138,8 @@ def main():
     subscription_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(handlers.start_subscription, pattern='subscribe')],
         states={
-            handlers.EXCLUDE_INGREDIENTS: [CallbackQueryHandler(handlers.exclude_ingredients)],
-            handlers.EXCLUDE_INGREDIENTS_HANDLING: [CallbackQueryHandler(handlers.exclude_ingredients_handling)],
+            # handlers.EXCLUDE_INGREDIENTS: [CallbackQueryHandler(handlers.exclude_ingredients)],
+            # handlers.EXCLUDE_INGREDIENTS_HANDLING: [CallbackQueryHandler(handlers.exclude_ingredients_handling)],
             handlers.CHOOSE_SUB_LENGTH: [CallbackQueryHandler(handlers.choose_sub_length)],
             handlers.FINISH_SUBSCRIBING: [CallbackQueryHandler(handlers.finish_subscribing)],
         },
@@ -150,7 +151,7 @@ def main():
     dp.add_handler(CallbackQueryHandler(get_another_dish, pattern='another_dish'))
     dp.add_handler(CallbackQueryHandler(get_dish_ingredients, pattern='dish_ingredients'))
     dp.add_handler(CommandHandler('restart', restart))
-    dp.add_handler(conversation_handler)
+    dp.add_handler(subscribers_menu_handler)
     dp.add_handler(subscription_handler)
 
     updater.start_polling()
