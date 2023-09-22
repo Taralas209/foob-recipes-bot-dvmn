@@ -8,7 +8,7 @@ django.setup()
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler
 from recipes.models import Recipes, Category, Ingredients
-from recipes.keyboard import START_KEYBOARD, SUBSCRIPTION
+from recipes.bot.keyboard import START_KEYBOARD, SUBSCRIPTION
 from environs import Env
 from config.settings import BOT_TOKEN
 from recipes import handlers
