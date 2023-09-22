@@ -120,6 +120,7 @@ def main():
             handlers.EXCLUDE_INGREDIENTS: [CallbackQueryHandler(handlers.exclude_ingredients)],
             handlers.EXCLUDE_INGREDIENTS_HANDLING: [CallbackQueryHandler(handlers.exclude_ingredients_handling)],
             handlers.CHOOSE_SUB_LENGTH: [CallbackQueryHandler(handlers.choose_sub_length)],
+            handlers.FINISH_SUBSCRIBING: [CallbackQueryHandler(handlers.finish_subscribing)],
         },
         fallbacks=[CommandHandler('restart', restart)]
     )

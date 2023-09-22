@@ -1,5 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CallbackContext
+from telegram.ext import CallbackContext, ConversationHandler
 import datetime
 
 
@@ -123,8 +123,8 @@ def exclude_ingredients_handling(update: Update, context: CallbackContext):
         return CHOOSE_SUB_LENGTH
     else:
         # TODO: actually write down user's choice to work with later
-        context.user_data["excluded_choices"].append(query.data)
         user_choice = context.user_data.get("exclude_options").pop(query.data)
+        context.user_data["excluded_choices"].append(user_choice)
         keyboard = []
         for option in context.user_data.get("exclude_options"):
             button = [InlineKeyboardButton(text=context.user_data.get("exclude_options")[option], callback_data=option)]
@@ -159,4 +159,25 @@ def choose_sub_length(update: Update, context: CallbackContext):
 
 
 def finish_subscribing(update: Update, context: CallbackContext):
-    pass
+    query = update.callback_query
+    query.answer()
+
+    today = datetime.date.today()
+    if query.data == "week_subscription":
+        end_date = today + datetime.timedelta(weeks=1)
+    elif query.data == "month_subscription":
+        end_date = today + datetime.timedelta(days=30)
+    elif query.data == "3_months_subscription":
+        end_date = today + datetime.timedelta(days=90)
+
+    context.user_data["sub_end_date"] = end_date
+
+    plan_choice = context.user_data["plan_choice"]
+
+
+    text = f"Вы успешно подписались на план {plan_choice} до {end_date}. Воспользуйтесь командой /menu, чтобы посмотреть ваши рецепты!"
+
+    query.message.reply_text(text=text)
+
+    return ConversationHandler.END
+
