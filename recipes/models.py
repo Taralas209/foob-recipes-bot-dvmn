@@ -6,8 +6,7 @@ class Recipes(models.Model):
     image = models.ImageField(verbose_name='Изображение блюда', upload_to='recipes')
     description = models.TextField(blank=True, null=True, verbose_name='Описание')
     ingredients = models.ManyToManyField('Ingredients', verbose_name='Ингредиенты', related_name='Рецепты')
-    category = models.ForeignKey('Category', on_delete=models.SET_NULL, related_name='recipes',
-                                 verbose_name='Категория', null=True)
+    category = models.ManyToManyField('Category', related_name='recipes', verbose_name='Категория', null=True)
 
     def __str__(self):
         return self.title
