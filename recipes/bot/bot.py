@@ -22,13 +22,11 @@ def start(update: Update, _):
         recipe = Recipes.objects.order_by('?').first()
         title = recipe.title
         image = recipe.image
-        description = recipe.description
-        category = recipe.category
+        categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
         update.message.reply_photo(image)
         update.message.reply_text(
             f'<b>{title}\n\n</b>'
-            f'{description}\n\n'
-            f'<b>Категория:</b> {category}',
+            f'<b>Категория:</b> {categories}',
             reply_markup=START_KEYBOARD,
             parse_mode='HTML'
         )
