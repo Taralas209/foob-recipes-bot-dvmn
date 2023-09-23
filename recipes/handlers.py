@@ -193,11 +193,13 @@ def finish_subscribing(update: Update, context: CallbackContext):
     telegram_user_id = query.from_user.id
     user, created = User.objects.get_or_create(
         telegram_id=telegram_user_id,
-        defaults={'start_subscription': today, 'end_subscription': end_date, 'is_subscription': True}
+        defaults={
+            'start_subscription': today,
+            'end_subscription': end_date,
+            'is_subscription': True,
+            'category': plan_choice
+        }
     )
-    if created:
-        user.username = query.from_user.username
-        user.save()
 
     category_title = PLAN_OPTIONS[plan_choice]
     subscription_plan = SubscriptionPlan(user=user, start_date=today, end_date=end_date)
