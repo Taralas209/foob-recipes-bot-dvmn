@@ -11,7 +11,7 @@ class User(models.Model):
                                  null=True)
 
     def __str__(self):
-        return self.telegram_id
+        return str(self.telegram_id)
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -67,7 +67,8 @@ class SubscriptionPlan(models.Model):
         verbose_name_plural = 'Планы подписки'
 
     def __str__(self):
-        return f"{self.user} - {self.start_date} - {self.end_date}"
+        user = str(self.user.telegram_id) if self.user else 'No User'
+        return f"{user} - {str(self.start_date)} - {str(self.end_date)}"
 
     def set_daily_plans(self, daily_plans_dict):
         self.daily_plans = json.dumps(daily_plans_dict)

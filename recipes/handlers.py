@@ -1,6 +1,8 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext, ConversationHandler
+from .models import SubscriptionPlan, User, Recipes, Category
 import datetime
+import random
 
 
 BUTTON_HANDLING, EXCLUDE_INGREDIENTS, EXCLUDE_INGREDIENTS_HANDLING, CHOOSE_SUB_LENGTH, FINISH_SUBSCRIBING = range(5)
@@ -186,20 +188,42 @@ def finish_subscribing(update: Update, context: CallbackContext):
         end_date = today + datetime.timedelta(days=7)
 
     context.user_data["sub_end_date"] = end_date
-
     plan_choice = context.user_data["plan_choice"]
+
+    telegram_user_id = query.from_user.id
+    user, created = User.objects.get_or_create(
+        telegram_id=telegram_user_id,
+        defaults={'start_subscription': today, 'end_subscription': end_date, 'is_subscription': True}
+    )
+    if created:
+        user.username = query.from_user.username
+        user.save()
+
+    category_title = PLAN_OPTIONS[plan_choice]
+    subscription_plan = SubscriptionPlan(user=user, start_date=today, end_date=end_date)
+    create_daily_plans(subscription_plan, category_title)
+    subscription_plan.save()
 
     text = f"""Вы успешно подписались на план \"{PLAN_OPTIONS[plan_choice]}\" до {end_date}. \
 Воспользуйтесь командой /menu, чтобы посмотреть ваши рецепты!"""
 
     query.message.reply_text(text=text)
 
-    new_plan = {
-        "user_id": query.from_user.id,
-        "plan": plan_choice,
-        "sub_start_date": today,
-        "sub_end_date": end_date
-    }
-
     return ConversationHandler.END
 
+
+def create_daily_plans(subscription_plan, category_title):
+    start_date = subscription_plan.start_date
+    end_date = subscription_plan.end_date
+    subscription_length = (end_date - start_date).days + 1
+
+    category = Category.objects.get(title=category_title)
+    recipes = Recipes.objects.filter(category=category)
+
+    daily_plans_dict = {}
+    for day_offset in range(subscription_length):
+        day = start_date + datetime.timedelta(days=day_offset)
+        daily_recipes = random.sample(list(recipes), min(3, len(recipes)))
+        daily_plans_dict[day.isoformat()] = [recipe.title for recipe in daily_recipes]
+
+    subscription_plan.set_daily_plans(daily_plans_dict)
