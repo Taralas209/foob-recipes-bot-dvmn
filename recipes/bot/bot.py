@@ -66,14 +66,12 @@ def get_another_dish(update: Update, context: CallbackContext):
         recipe = Recipes.objects.order_by('?').first()
         title = recipe.title
         image = recipe.image
-        description = recipe.description
-        category = recipe.category
+        categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
 
         query.message.reply_photo(image)
         query.message.reply_text(
             f'<b>{title}\n\n</b>'
-            f'{description}\n\n'
-            f'<b>Категория:</b> {category}',
+            f'<b>Категория:</b> {categories}',
             reply_markup=START_KEYBOARD,
             parse_mode='HTML'
         )
