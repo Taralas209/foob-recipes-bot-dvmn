@@ -54,7 +54,12 @@ class Ingredients(models.Model):
 
 
 class SubscriptionPlan(models.Model):
-    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='subscription_plans', verbose_name='Пользователь')
+    user = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        related_name='subscription_plans',
+        verbose_name='Пользователь'
+    )
     plan_choice = models.CharField(max_length=100, verbose_name='Выбор Плана', null=True, default=None)
     start_date = models.DateField(verbose_name='Дата начала')
     end_date = models.DateField(verbose_name='Дата окончания')

@@ -30,7 +30,8 @@ def start_subscription(update: Update, context: CallbackContext):
     active_subscription = user.current_subscription_plan
     if active_subscription and active_subscription.end_date >= datetime.date.today():
         plan_choice = PLAN_OPTIONS.get(active_subscription.plan_choice, "Неизвестный план")
-        query.message.reply_text(text=f"У вас уже есть активная подписка на план \"{plan_choice}\" до {active_subscription.end_date}.")
+        text = f"У вас уже есть активная подписка на план \"{plan_choice}\" до {active_subscription.end_date}."
+        query.message.reply_text(text=text)
         return show_user_menu(update, context)
 
     keyboard = []
@@ -43,7 +44,6 @@ def start_subscription(update: Update, context: CallbackContext):
     query.message.reply_text(text, reply_markup=reply_markup)
 
     return CHOOSE_SUB_LENGTH
-
 
 
 def choose_sub_length(update: Update, context: CallbackContext):
@@ -120,7 +120,27 @@ def create_daily_plans(subscription_plan, category_title):
 
 
 # Subscribed user's menu
+
+
+def check_subscription(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    try:
+        user = User.objects.get(telegram_id=user_id)
+    except User.DoesNotExist:
+        return False
+    return user.current_subscription_plan and user.current_subscription_plan.end_date >= datetime.date.today()
+
+
 def show_user_menu(update: Update, context: CallbackContext):
+    if update.message and not check_subscription(update, context):
+        reply_markup = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Подписаться", callback_data="subscribe")]]
+        )
+        update.message.reply_text(
+            "Вы ещё не подписаны на план\nВоспользуйтесь кнопкой ниже, если хотите подписаться",
+            reply_markup=reply_markup
+        )
+
     menu = context.user_data.get("plan_choice")
     expiration_date = context.user_data.get("sub_end_date")
 
@@ -137,7 +157,8 @@ def show_user_menu(update: Update, context: CallbackContext):
     if menu not in PLAN_OPTIONS:
         text = "Произошла ошибка: план питания не найден. Пожалуйста, попробуйте еще раз."
     else:
-        text = f"У вас подписка на план \"{PLAN_OPTIONS[menu]}\" до {expiration_date}:\n\nВыберите кнопку, чтобы посмотреть рацион на:"
+        text = f"""У вас подписка на план \"{PLAN_OPTIONS[menu]}\" до {expiration_date}:\n\n\
+        Выберите кнопку, чтобы посмотреть рацион на:"""
 
     keyboard = [
         [
@@ -155,7 +176,6 @@ def show_user_menu(update: Update, context: CallbackContext):
         menu_message = update.callback_query.message.reply_text(text, reply_markup=reply_markup)
         print("Sent menu_message_id: ", menu_message.message_id)
         print("Sent chat_id: ", update.callback_query.message.chat_id)
-
 
     context.user_data["menu_message_id"] = menu_message.message_id
 
@@ -215,34 +235,67 @@ def show_daily_plan(update: Update, context: CallbackContext):
     meals = daily_plans.get(str(date), [])
     print("meals: ", meals)
 
-    # Отправляем каждое блюдо отдельным сообщением
-    for meal in meals:
-        recipe = Recipes.objects.get(title=meal)
-        title = recipe.title
-        image = recipe.image
-        categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
+    # Записываем индекс текущего рецепта в user_data
+    current_recipe_index = context.user_data.get("current_recipe_index", 0)
+    if current_recipe_index >= len(meals):
+        current_recipe_index = 0  # Reset to the first recipe if index is out of range
 
-        # Получаем ингредиенты для блюда
+    recipe = Recipes.objects.get(title=meals[current_recipe_index])
+    title = recipe.title
+    image = recipe.image
+    categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
+
+    # Отправляем фотографию и название блюда, категорию
+    context.bot.send_photo(chat_id=chat_id, photo=image)
+    context.bot.send_message(chat_id=chat_id,
+                             text=f"<b>{title}\n\n</b>"
+                                  f"<b>Категория:</b> {categories}",
+                             parse_mode="HTML")
+
+    # Отправляем кнопки для переключения между рецептами и просмотра ингредиентов
+    keyboard = [
+        [
+            InlineKeyboardButton("Следующий рецепт", callback_data="next_recipe"),
+            InlineKeyboardButton("Ингредиенты блюда", callback_data="show_ingredients")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    context.bot.send_message(chat_id=chat_id, text="Выберите действие:", reply_markup=reply_markup)
+
+
+def next_recipe(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    # Увеличиваем индекс текущего рецепта
+    current_recipe_index = context.user_data.get("current_recipe_index", 0)
+    context.user_data["current_recipe_index"] = current_recipe_index + 1
+
+    # Показываем следующий рецепт
+    return show_daily_plan(update, context)
+
+
+def show_ingredients(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    # Получаем индекс текущего рецепта
+    current_recipe_index = context.user_data.get("current_recipe_index", 0)
+
+    user_id = query.from_user.id
+    user = User.objects.get(telegram_id=user_id)
+    subscription_plan = user.subscription_plans.last()
+    daily_plans = subscription_plan.get_daily_plans()
+    date = context.user_data.get("plan_date")
+    meals = daily_plans.get(str(date), [])
+
+    if current_recipe_index < len(meals):
+        recipe = Recipes.objects.get(title=meals[current_recipe_index])
         ingredients = recipe.ingredients.all()
         ingredients_list = "\n".join([f"- {ingredient.title}" for ingredient in ingredients])
 
-        # Отправляем фотографию и название блюда, категорию и ингредиенты
-        context.bot.send_photo(chat_id=chat_id, photo=image)
-        context.bot.send_message(chat_id=chat_id,
-                                 text=f"<b>{title}\n\n</b>"
-                                      f"<b>Категория:</b> {categories}\n\n"
-                                      f"<b>Ингредиенты:</b>\n{ingredients_list}",
-                                 parse_mode='HTML')
-
-    # Отправляем кнопку возвращения к меню после всех блюд
-    return_menu_button = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("Меню", callback_data="back")
-            ]
-        ]
-    )
-    context.bot.send_message(chat_id=chat_id, text="Выберите другой день нажав кнопку меню",
-                             reply_markup=return_menu_button)
-
-
+        query.message.reply_text(
+            f"<b>Ингредиенты для {recipe.title}:</b>\n\n{ingredients_list}",
+            parse_mode="HTML")
+    else:
+        query.message.reply_text("Ошибка: Нет доступных рецептов.")
