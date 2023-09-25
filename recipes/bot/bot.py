@@ -10,8 +10,7 @@ import datetime
 
 INGREDIENTS = []
 PREVIOUS_INGREDIENT_NUMBER = 0
-NUMBER_RECIPE_CHANGES = 2
-TODAY = {}
+USER_CLICKS = {}
 
 bot = Bot(token=BOT_TOKEN)
 
@@ -53,23 +52,24 @@ def start(context: CallbackContext):
 def restart(update, context):
     update.message.reply_text("Бот перезапущен!")
     context.user_data.clear()
-    return start(update, context)
+    return start(context)
 
 
 def get_another_dish(update: Update, _):
     """Выбрать другой рецепт."""
     global INGREDIENTS
     global NUMBER_RECIPE_CHANGES
-    global TODAY
+    global USER_CLICKS
 
     query = update.callback_query
+    user_id = query.message.chat_id
     query.answer()
 
-    if TODAY == {} or datetime.datetime.now().date() > TODAY['today']:
+    if user_id not in USER_CLICKS or datetime.datetime.now().date() > USER_CLICKS[user_id]:
         NUMBER_RECIPE_CHANGES = 2
 
     if NUMBER_RECIPE_CHANGES > 0:
-        TODAY['today'] = datetime.datetime.now().date()
+        USER_CLICKS[user_id] = datetime.datetime.now().date()
         recipe = Recipes.objects.order_by('?').first()
         # recipe_id = recipe.pk
         title = recipe.title
@@ -139,14 +139,14 @@ def start_recipe(update, context):
 
 
 def main():
+
     bot.set_my_commands(
         [
             BotCommand("start", "Запустить бота и получить случайный рецепт"),
             BotCommand("menu", "Показать меню с вашим планом")
         ]
     )
-    global TODAY
-    global NUMBER_RECIPE_CHANGES
+   
 
     env = Env()
     env.read_env()
