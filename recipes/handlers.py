@@ -157,7 +157,8 @@ def show_user_menu(update: Update, context: CallbackContext):
     if menu not in PLAN_OPTIONS:
         text = "Произошла ошибка: план питания не найден. Пожалуйста, попробуйте еще раз."
     else:
-        text = f"У вас подписка на план \"{PLAN_OPTIONS[menu]}\" до {expiration_date}:\n\nВыберите кнопку, чтобы посмотреть рацион на:"
+        text = f"""У вас подписка на план \"{PLAN_OPTIONS[menu]}\" до {expiration_date}:\n\n\
+        Выберите кнопку, чтобы посмотреть рацион на:"""
 
     keyboard = [
         [
@@ -215,7 +216,6 @@ def button_handling(update: Update, context: CallbackContext):
             f"Ваш план подписки закончился {subscription_plan.end_date}. Пожалуйста, оформите новую подписку.")
 
 
-
 def show_daily_plan(update: Update, context: CallbackContext):
     print("show_daily_plan called")
     query = update.callback_query
@@ -250,13 +250,13 @@ def show_daily_plan(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=chat_id,
                              text=f"<b>{title}\n\n</b>"
                                   f"<b>Категория:</b> {categories}",
-                             parse_mode='HTML')
+                             parse_mode="HTML")
 
     # Отправляем кнопки для переключения между рецептами и просмотра ингредиентов
     keyboard = [
         [
             InlineKeyboardButton("Следующий рецепт", callback_data="next_recipe"),
-            InlineKeyboardButton("Ингридиенты блюда", callback_data="show_ingredients")
+            InlineKeyboardButton("Ингредиенты блюда", callback_data="show_ingredients")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -295,7 +295,7 @@ def show_ingredients(update: Update, context: CallbackContext):
         ingredients_list = "\n".join([f"- {ingredient.title}" for ingredient in ingredients])
 
         query.message.reply_text(
-            f'<b>Ингредиенты для {recipe.title}:</b>\n\n{ingredients_list}',
-            parse_mode='HTML')
+            f"<b>Ингредиенты для {recipe.title}:</b>\n\n{ingredients_list}",
+            parse_mode="HTML")
     else:
-        query.message.reply_text('Ошибка: Нет доступных рецептов.')
+        query.message.reply_text("Ошибка: Нет доступных рецептов.")

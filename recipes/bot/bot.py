@@ -1,14 +1,12 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot, InputMediaPhoto, InputMedia, InputFile, BotCommand
+from telegram import Update, Bot, BotCommand
 from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler
 from recipes.models import Recipes
 from recipes.bot.keyboard import START_KEYBOARD, SUBSCRIPTION
 from environs import Env
-from config.settings import BOT_TOKEN, MEDIA_ROOT, BASE_DIR
+from config.settings import BOT_TOKEN
 from recipes import handlers
 from recipes.handlers import next_recipe, show_ingredients
 import datetime
-import os
-from pathlib import Path
 
 INGREDIENTS = []
 PREVIOUS_INGREDIENT_NUMBER = 0
