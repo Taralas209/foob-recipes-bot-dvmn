@@ -30,7 +30,8 @@ def start_subscription(update: Update, context: CallbackContext):
     active_subscription = user.current_subscription_plan
     if active_subscription and active_subscription.end_date >= datetime.date.today():
         plan_choice = PLAN_OPTIONS.get(active_subscription.plan_choice, "Неизвестный план")
-        query.message.reply_text(text=f"У вас уже есть активная подписка на план \"{plan_choice}\" до {active_subscription.end_date}.")
+        text = f"У вас уже есть активная подписка на план \"{plan_choice}\" до {active_subscription.end_date}."
+        query.message.reply_text(text=text)
         return show_user_menu(update, context)
 
     keyboard = []
@@ -43,7 +44,6 @@ def start_subscription(update: Update, context: CallbackContext):
     query.message.reply_text(text, reply_markup=reply_markup)
 
     return CHOOSE_SUB_LENGTH
-
 
 
 def choose_sub_length(update: Update, context: CallbackContext):
@@ -176,7 +176,6 @@ def show_user_menu(update: Update, context: CallbackContext):
         print("Sent menu_message_id: ", menu_message.message_id)
         print("Sent chat_id: ", update.callback_query.message.chat_id)
 
-
     context.user_data["menu_message_id"] = menu_message.message_id
 
     return BUTTON_HANDLING
@@ -264,5 +263,3 @@ def show_daily_plan(update: Update, context: CallbackContext):
     )
     context.bot.send_message(chat_id=chat_id, text="Выберите другой день нажав кнопку меню",
                              reply_markup=return_menu_button)
-
-

@@ -72,12 +72,10 @@ def get_another_dish(update: Update, _):
     if NUMBER_RECIPE_CHANGES > 0:
         TODAY['today'] = datetime.datetime.now().date()
         recipe = Recipes.objects.order_by('?').first()
-        #recipe_id = recipe.pk
+        # recipe_id = recipe.pk
         title = recipe.title
         image = recipe.image
         categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
-
-
 
         query.message.reply_photo(image)
         query.message.reply_text(
