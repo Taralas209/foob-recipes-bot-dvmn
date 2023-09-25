@@ -4,11 +4,9 @@ import json
 
 class User(models.Model):
     telegram_id = models.PositiveIntegerField(verbose_name='Телеграм ID')
-    start_subscription = models.DateField(verbose_name='Дата начала подписки')
-    end_subscription = models.DateField(verbose_name='Дата окончания подписки')
-    is_subscription = models.BooleanField(verbose_name='Активна ли подписка')
-    category = models.ForeignKey('Category', related_name='users', verbose_name='Категория', on_delete=models.SET_NULL,
-                                 null=True)
+    current_subscription_plan = models.ForeignKey('SubscriptionPlan', related_name='users',
+                                                  verbose_name='Текущий план подписки', on_delete=models.SET_NULL,
+                                                  null=True)
 
     def __str__(self):
         return str(self.telegram_id)
@@ -56,8 +54,8 @@ class Ingredients(models.Model):
 
 
 class SubscriptionPlan(models.Model):
-    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='subscription_plans',
-                             verbose_name='Пользователь')
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='subscription_plans', verbose_name='Пользователь')
+    plan_choice = models.CharField(max_length=100, verbose_name='Выбор Плана', null=True, default=None)
     start_date = models.DateField(verbose_name='Дата начала')
     end_date = models.DateField(verbose_name='Дата окончания')
     daily_plans = models.TextField(verbose_name='Планы на каждый день')

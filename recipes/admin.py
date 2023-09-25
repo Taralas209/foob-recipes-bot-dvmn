@@ -5,8 +5,32 @@ import json
 admin.site.register(Recipes)
 admin.site.register(Category)
 admin.site.register(Ingredients)
-admin.site.register(User)
 
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('telegram_id', 'get_plan', 'get_start_date', 'get_end_date')
+
+    def get_plan(self, obj):
+        if obj.current_subscription_plan:
+            return obj.current_subscription_plan.plan_choice
+        return 'Нет плана'
+
+    get_plan.short_description = 'План'
+
+    def get_start_date(self, obj):
+        if obj.current_subscription_plan:
+            return obj.current_subscription_plan.start_date
+        return 'Нет даты начала'
+
+    get_start_date.short_description = 'Дата начала'
+
+    def get_end_date(self, obj):
+        if obj.current_subscription_plan:
+            return obj.current_subscription_plan.end_date
+        return 'Нет даты окончания'
+
+    get_end_date.short_description = 'Дата окончания'
+
+admin.site.register(User, UserAdmin)
 
 class SubscriptionPlanAdmin(admin.ModelAdmin):
     list_display = ('user', 'start_date', 'end_date', 'readable_daily_plans')

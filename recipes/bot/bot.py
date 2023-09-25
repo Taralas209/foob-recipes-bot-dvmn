@@ -76,6 +76,9 @@ def get_another_dish(update: Update, _):
         title = recipe.title
         image = recipe.image
         categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
+
+
+
         query.message.reply_photo(image)
         query.message.reply_text(
             f'<b>{title}\n\n</b>'
