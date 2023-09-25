@@ -120,7 +120,27 @@ def create_daily_plans(subscription_plan, category_title):
 
 
 # Subscribed user's menu
+
+
+def check_subscription(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    try:
+        user = User.objects.get(telegram_id=user_id)
+    except User.DoesNotExist:
+        return False
+    return user.current_subscription_plan and user.current_subscription_plan.end_date >= datetime.date.today()
+
+
 def show_user_menu(update: Update, context: CallbackContext):
+    if update.message and not check_subscription(update, context):
+        reply_markup = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Подписаться", callback_data="subscribe")]]
+        )
+        update.message.reply_text(
+            "Вы ещё не подписаны на план\nВоспользуйтесь кнопкой ниже, если хотите подписаться",
+            reply_markup=reply_markup
+        )
+
     menu = context.user_data.get("plan_choice")
     expiration_date = context.user_data.get("sub_end_date")
 
