@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot, InputMediaPhoto, InputMedia, InputFile
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot, InputMediaPhoto, InputMedia, InputFile, BotCommand
 from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler
 from recipes.models import Recipes
 from recipes.bot.keyboard import START_KEYBOARD, SUBSCRIPTION
@@ -142,6 +142,12 @@ def start_recipe(update, context):
 
 
 def main():
+    bot.set_my_commands(
+        [
+            BotCommand("start", "Запустить бота и получить случайный рецепт"),
+            BotCommand("menu", "Показать меню с вашим планом")
+        ]
+    )
     global TODAY
     global NUMBER_RECIPE_CHANGES
 
