@@ -1,20 +1,23 @@
-from telegram import Update, ParseMode
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot, InputMediaPhoto, InputMedia, InputFile
 from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler
-from recipes.models import Recipes, Category, Ingredients
+from recipes.models import Recipes
 from recipes.bot.keyboard import START_KEYBOARD, SUBSCRIPTION
 from environs import Env
-from config.settings import BOT_TOKEN
+from config.settings import BOT_TOKEN, MEDIA_ROOT, BASE_DIR
 from recipes import handlers
-from django.utils import timezone
 import datetime
-import logging
+import os
+from pathlib import Path
 
 INGREDIENTS = []
+PREVIOUS_INGREDIENT_NUMBER = 0
 NUMBER_RECIPE_CHANGES = 2
 TODAY = {}
 
+bot = Bot(token=BOT_TOKEN)
 
-def start(update: Update, _):
+
+def start(context: CallbackContext):
     global INGREDIENTS
     global NUMBER_RECIPE_CHANGES
 
@@ -23,24 +26,29 @@ def start(update: Update, _):
         title = recipe.title
         image = recipe.image
         categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
-        update.message.reply_photo(image)
-        update.message.reply_text(
-            f'<b>{title}\n\n</b>'
-            f'<b>Категория:</b> {categories}',
+        context.bot.send_photo(chat_id=context.job.context, photo=image)
+        context.bot.send_message(
+            chat_id=context.job.context,
+            text=f'<b>{title}\n\n</b>'
+                 f'<b>Категория:</b> {categories}',
             reply_markup=START_KEYBOARD,
             parse_mode='HTML'
         )
-        update.message.reply_text(
-            'Хотите получать ежедневное меню и не беспокоиться о том, что приготовить завтра? 🍔 🫤\n\n'
-            'Оформите нашу подписку, и мы побеспокоимся за вас ⬇️',
+        context.bot.send_message(
+            chat_id=context.job.context,
+            text='Хотите получать ежедневное меню и не беспокоиться о том, что приготовить завтра? 🍔 🫤\n\n'
+                 'Оформите нашу подписку, и мы побеспокоимся за вас ⬇️',
             reply_markup=SUBSCRIPTION)
+
         INGREDIENTS.append(recipe)
     else:
-        update.message.reply_text('Вы можете сменить рецепт не более двух раз за сутки!\n\n'
-                                  '<b>Хотите использовать наш функционал по максимуму, а также ежедневно получать индивидуальное меню?\n\n</b>'
-                                  'Оформите подписку на наш сервис ⬇️',
-                                  reply_markup=SUBSCRIPTION,
-                                  parse_mode='HTML')
+        context.bot.send_message(
+            chat_id=context.job.context,
+            text='Вы можете сменить рецепт не более двух раз за сутки!\n\n'
+                 '<b>Хотите использовать наш функционал по максимуму, а также ежедневно получать индивидуальное меню?\n\n</b>'
+                 'Оформите подписку на наш сервис ⬇️',
+            reply_markup=SUBSCRIPTION,
+            parse_mode='HTML')
 
 
 def restart(update, context):
@@ -49,7 +57,7 @@ def restart(update, context):
     return start(update, context)
 
 
-def get_another_dish(update: Update, context: CallbackContext):
+def get_another_dish(update: Update, _):
     """Выбрать другой рецепт."""
     global INGREDIENTS
     global NUMBER_RECIPE_CHANGES
@@ -64,19 +72,32 @@ def get_another_dish(update: Update, context: CallbackContext):
     if NUMBER_RECIPE_CHANGES > 0:
         TODAY['today'] = datetime.datetime.now().date()
         recipe = Recipes.objects.order_by('?').first()
+        #recipe_id = recipe.pk
         title = recipe.title
         image = recipe.image
-        description = recipe.description
-        category = recipe.category
-
+        categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
         query.message.reply_photo(image)
         query.message.reply_text(
             f'<b>{title}\n\n</b>'
-            f'{description}\n\n'
-            f'<b>Категория:</b> {category}',
+            f'<b>Категория:</b> {categories}',
             reply_markup=START_KEYBOARD,
             parse_mode='HTML'
         )
+
+        # img_path = os.path.join(BASE_DIR, MEDIA_ROOT, image)
+        # print(img_path)
+        #
+        # with open(img_path, 'rb') as file:
+        #     photo = InputMediaPhoto(file)
+        #
+        # bot.edit_message_media(
+        #     chat_id=query.from_user.id,
+        #     message_id=query.message.message_id,
+        #     media=photo
+        # )
+        # query.message.edit_media(
+        #     media=InputMediaPhoto(photo
+        # )
         query.message.reply_text(
             'Хотите получать ежедневное меню и не беспокоиться о том, что приготовить завтра? 🍔 🫤\n\n'
             'Оформите нашу подписку, и мы побеспокоимся за вас ⬇️',
@@ -90,6 +111,13 @@ def get_another_dish(update: Update, context: CallbackContext):
                                  reply_markup=SUBSCRIPTION,
                                  parse_mode='HTML')
 
+
+# def get_previous_dish(update: Update):
+#     """Получает предыдущее блюдо."""
+#     if PREVIOUS_INGREDIENT_NUMBER == 0:
+#         pass
+#     else:
+#         dish_last_number =
 
 def get_dish_ingredients(update: Update, _):
     """Показать Ингредиенты блюда."""
@@ -105,15 +133,9 @@ def get_dish_ingredients(update: Update, _):
         parse_mode='HTML')
 
 
-def get_subscribe(update: Update, _):
-    """Оформить подписку."""
-    query = update.callback_query
-    query.answer()
-
-    query.message.reply_text(
-        'Спасибо, за подписку на наш сервис ❤️\n\n'
-        'Выше мы оставили для Вас меню на сегодня ⬆️')
-    query.message.reply_text(f'{query.data}')
+def start_recipe(update, context):
+    context.job_queue.run_repeating(start, interval=datetime.timedelta(seconds=86400), first=1,
+                                    context=update.message.chat_id)
 
 
 def main():
@@ -145,7 +167,7 @@ def main():
     )
 
     dp = updater.dispatcher
-    dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(CommandHandler('start', start_recipe))
     dp.add_handler(CallbackQueryHandler(get_another_dish, pattern='another_dish'))
     dp.add_handler(CallbackQueryHandler(get_dish_ingredients, pattern='dish_ingredients'))
     dp.add_handler(CommandHandler('restart', restart))
