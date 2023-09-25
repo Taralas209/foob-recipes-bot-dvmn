@@ -5,6 +5,7 @@ from recipes.bot.keyboard import START_KEYBOARD, SUBSCRIPTION
 from environs import Env
 from config.settings import BOT_TOKEN, MEDIA_ROOT, BASE_DIR
 from recipes import handlers
+from recipes.handlers import next_recipe, show_ingredients
 import datetime
 import os
 from pathlib import Path
@@ -177,6 +178,8 @@ def main():
     dp.add_handler(CommandHandler('start', start_recipe))
     dp.add_handler(CallbackQueryHandler(get_another_dish, pattern='another_dish'))
     dp.add_handler(CallbackQueryHandler(get_dish_ingredients, pattern='dish_ingredients'))
+    dp.add_handler(CallbackQueryHandler(next_recipe, pattern='next_recipe'))
+    dp.add_handler(CallbackQueryHandler(show_ingredients, pattern='show_ingredients'))
     dp.add_handler(CommandHandler('restart', restart))
     dp.add_handler(subscribers_menu_handler)
     dp.add_handler(subscription_handler)

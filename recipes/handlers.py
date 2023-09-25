@@ -215,6 +215,7 @@ def button_handling(update: Update, context: CallbackContext):
             f"Ваш план подписки закончился {subscription_plan.end_date}. Пожалуйста, оформите новую подписку.")
 
 
+
 def show_daily_plan(update: Update, context: CallbackContext):
     print("show_daily_plan called")
     query = update.callback_query
@@ -234,32 +235,67 @@ def show_daily_plan(update: Update, context: CallbackContext):
     meals = daily_plans.get(str(date), [])
     print("meals: ", meals)
 
-    # Отправляем каждое блюдо отдельным сообщением
-    for meal in meals:
-        recipe = Recipes.objects.get(title=meal)
-        title = recipe.title
-        image = recipe.image
-        categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
+    # Записываем индекс текущего рецепта в user_data
+    current_recipe_index = context.user_data.get("current_recipe_index", 0)
+    if current_recipe_index >= len(meals):
+        current_recipe_index = 0  # Reset to the first recipe if index is out of range
 
-        # Получаем ингредиенты для блюда
+    recipe = Recipes.objects.get(title=meals[current_recipe_index])
+    title = recipe.title
+    image = recipe.image
+    categories = ", ".join([cat.title for cat in recipe.category.all()]) if recipe.category.all() else "None"
+
+    # Отправляем фотографию и название блюда, категорию
+    context.bot.send_photo(chat_id=chat_id, photo=image)
+    context.bot.send_message(chat_id=chat_id,
+                             text=f"<b>{title}\n\n</b>"
+                                  f"<b>Категория:</b> {categories}",
+                             parse_mode='HTML')
+
+    # Отправляем кнопки для переключения между рецептами и просмотра ингредиентов
+    keyboard = [
+        [
+            InlineKeyboardButton("Следующий рецепт", callback_data="next_recipe"),
+            InlineKeyboardButton("Ингридиенты блюда", callback_data="show_ingredients")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    context.bot.send_message(chat_id=chat_id, text="Выберите действие:", reply_markup=reply_markup)
+
+
+def next_recipe(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    # Увеличиваем индекс текущего рецепта
+    current_recipe_index = context.user_data.get("current_recipe_index", 0)
+    context.user_data["current_recipe_index"] = current_recipe_index + 1
+
+    # Показываем следующий рецепт
+    return show_daily_plan(update, context)
+
+
+def show_ingredients(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    # Получаем индекс текущего рецепта
+    current_recipe_index = context.user_data.get("current_recipe_index", 0)
+
+    user_id = query.from_user.id
+    user = User.objects.get(telegram_id=user_id)
+    subscription_plan = user.subscription_plans.last()
+    daily_plans = subscription_plan.get_daily_plans()
+    date = context.user_data.get("plan_date")
+    meals = daily_plans.get(str(date), [])
+
+    if current_recipe_index < len(meals):
+        recipe = Recipes.objects.get(title=meals[current_recipe_index])
         ingredients = recipe.ingredients.all()
         ingredients_list = "\n".join([f"- {ingredient.title}" for ingredient in ingredients])
 
-        # Отправляем фотографию и название блюда, категорию и ингредиенты
-        context.bot.send_photo(chat_id=chat_id, photo=image)
-        context.bot.send_message(chat_id=chat_id,
-                                 text=f"<b>{title}\n\n</b>"
-                                      f"<b>Категория:</b> {categories}\n\n"
-                                      f"<b>Ингредиенты:</b>\n{ingredients_list}",
-                                 parse_mode='HTML')
-
-    # Отправляем кнопку возвращения к меню после всех блюд
-    return_menu_button = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("Меню", callback_data="back")
-            ]
-        ]
-    )
-    context.bot.send_message(chat_id=chat_id, text="Выберите другой день нажав кнопку меню",
-                             reply_markup=return_menu_button)
+        query.message.reply_text(
+            f'<b>Ингредиенты для {recipe.title}:</b>\n\n{ingredients_list}',
+            parse_mode='HTML')
+    else:
+        query.message.reply_text('Ошибка: Нет доступных рецептов.')
